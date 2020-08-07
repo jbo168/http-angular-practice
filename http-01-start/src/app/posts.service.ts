@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpEventType } from '@angular/common/http';
 import { Post } from './post.model';
 
-import { map, catchError } from 'rxjs/operators'
+import { map, catchError, tap } from 'rxjs/operators'
 import { Subject, throwError } from 'rxjs';
 
 @Injectable({providedIn: 'root'})
@@ -16,7 +16,10 @@ export class PostsService {
         this.http
         .post<{ name:string }>(
           'https://angular-course-project-834ca.firebaseio.com/posts.json',
-          postData
+          postData,
+          {
+            observe: 'body'
+          }
         )
         .subscribe(responseData => {
           console.log(responseData);
@@ -28,7 +31,11 @@ export class PostsService {
     fetchPosts() {
         return this.http
         .get<{ [key: string]: Post }>(
-            'https://angular-course-project-834ca.firebaseio.com/posts.json'
+            'https://angular-course-project-834ca.firebaseio.com/posts.json',
+            {
+              headers: new HttpHeaders({'Custom-Header': 'Hello'}),
+              params: new HttpParams().set('print', 'pretty')
+            }
         )
         .pipe(
           map(responseData => {
@@ -48,7 +55,20 @@ export class PostsService {
     }
 
     deletePosts() {
-      return this.http.delete('https://angular-course-project-834ca.firebaseio.com/posts.json')
+      return this.http.delete(
+        'https://angular-course-project-834ca.firebaseio.com/posts.json',
+        {
+          observe: 'events'
+        }
+      ).pipe(tap(event => {
+        console.log(event);
+        if (event.type == HttpEventType.Sent) {
+          // ...
+        }
+        if (event.type == HttpEventType.Response) {
+          console.log(event.body);
+        }
+      }));
     }
     
 }
